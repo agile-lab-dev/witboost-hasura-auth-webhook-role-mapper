@@ -1,0 +1,15 @@
+stages:
+  - test
+  - build
+
+image: alpine:3.10
+
+test:
+  stage: test
+  script:
+    - 'true'
+
+build:
+  stage: build
+  script:
+    - 'true'

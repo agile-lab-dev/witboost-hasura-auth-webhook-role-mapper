@@ -1,0 +1,8 @@
+__pycache__/
+.coverage
+*.xml
+.idea
+
+# lab configuration file
+.lab.cache
+.lab.yml
