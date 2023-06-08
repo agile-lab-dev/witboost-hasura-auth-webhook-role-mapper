@@ -2,6 +2,7 @@ __pycache__/
 .coverage
 *.xml
 .idea
+.vscode
 
 # lab configuration file
 .lab.cache
