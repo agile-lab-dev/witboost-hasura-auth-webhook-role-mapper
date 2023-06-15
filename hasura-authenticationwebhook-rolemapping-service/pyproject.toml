@@ -21,6 +21,10 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.17.0"
 opentelemetry-exporter-otlp = "^1.17.0"
 pip-audit = "^2.5.3"
 pytest-cov = "^4.0.0"
+pyjwt = {version = "^2.7.0", extras = ["crypto"]}
+msgraph-sdk = "1.0.0a12"
+pytest-asyncio = "^0.21.0"
+pyyaml = "^6.0"
 
 [tool.ruff]
 select = ["E", "F", "I"]
@@ -30,6 +34,7 @@ skip-string-normalization = true
 
 [tool.pytest.ini_options]
 addopts = "-v"
+asyncio_mode = "auto"
 
 [tool.coverage.report]
 # fail_under = 90
@@ -52,7 +57,8 @@ authorized_licenses = [
     'other/proprietary',
     'python software foundation',
     'the unlicense (unlicense)',
-    '3-clause bsd'
+    '3-clause bsd',
+    'BSD-3-Clause'
 ]
 unauthorized_licenses = [
     "gnu general public license v2 (gplv2)"

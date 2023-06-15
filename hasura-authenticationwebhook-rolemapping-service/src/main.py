@@ -4,9 +4,23 @@
 
 from __future__ import annotations
 
-from typing import Union
+import logging
+from functools import lru_cache
+from typing import Annotated, Union
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Response, status
+
+from src.handlers.webhook_handler import (
+    WebhookHandler,
+    WebhookHandlerUnauthorizedException,
+)
+from src.jwt.azure_claims_service import AzureClaimsService
+from src.jwt.azure_membership_service import AzureConfig, AzureMembershipService
+from src.jwt.claims_service import ClaimsService
+from src.jwt.concrete_jwt_service import ConcreteJWTService, JWTConfig
+from src.jwt.jwt_service import JWTService
+from src.jwt.membership_service import MembershipService
+from src.utils import setup_logging
 
 from .models import (
     AuthenticationRequest,
@@ -18,6 +32,9 @@ from .models import (
     ValidationError,
 )
 
+setup_logging()
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title="Hasura Authentication Webhook & Role Mapping Microservice",
     description="Microservice responsible for Hasura webhook-based authentication and role mapping.",  # noqa: E501
@@ -26,19 +43,44 @@ app = FastAPI(
 )
 
 
+@lru_cache()
+def get_webhook_handler() -> WebhookHandler:
+    jwt_config = JWTConfig()
+    azure_config = AzureConfig()
+    jwt_service: JWTService = ConcreteJWTService(jwt_config)
+    membership_service: MembershipService = AzureMembershipService(azure_config)
+    claims_service: ClaimsService = AzureClaimsService(membership_service)
+    return WebhookHandler(claims_service=claims_service, jwt_service=jwt_service)
+
+
 @app.post(
     "/v1/authenticate",
-    response_model=AuthenticationResponse,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
+    responses={
+        "200": {"model": AuthenticationResponse},
+        "400": {"model": ValidationError},
+        "401": {"model": str},
+        "500": {"model": SystemError},
+    },
     tags=["AuthenticationWebhook"],
 )
-def authenticate_request(
+async def authenticate_request(
     body: AuthenticationRequest,
-) -> Union[AuthenticationResponse, ValidationError, SystemError]:
+    response: Response,
+    webhook_handler: Annotated[WebhookHandler, Depends(get_webhook_handler)],
+) -> Union[AuthenticationResponse, ValidationError, str, SystemError]:
     """
     Authentication request sent by Hasura about a client
     """
-    return SystemError(error="error")
+    try:
+        res = await webhook_handler.authenticate_request(body)
+        return res
+    except WebhookHandlerUnauthorizedException:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Unauthorized"
+    except Exception:
+        logger.exception("Exception in /v1/authenticate")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return SystemError(error="System error")
 
 
 @app.put(

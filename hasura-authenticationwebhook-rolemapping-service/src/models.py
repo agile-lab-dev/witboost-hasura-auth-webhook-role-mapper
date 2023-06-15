@@ -12,24 +12,24 @@ from pydantic import BaseModel, Field
 class Headers(BaseModel):
     Authorization: str = Field(
         ...,
-        description='Standard HTTP Authorization header, Bearer schema, with JWT token',
-        example='Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',  # noqa: E501
+        description="Standard HTTP Authorization header, Bearer schema, with JWT token",
+        example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",  # noqa: E501
     )
 
 
 class Request(BaseModel):
     query: str = Field(
         ...,
-        description='JSON-stringified GraphQL query',
-        example='query ProductById($id: uuid!) {\n  products_by_pk(id: $id) {\n    id\n    name\n  }\n}',  # noqa: E501
+        description="JSON-stringified GraphQL query",
+        example="query ProductById($id: uuid!) {\n  products_by_pk(id: $id) {\n    id\n    name\n  }\n}",  # noqa: E501
     )
     variables: Optional[Dict[str, Any]] = Field(
         None,
-        description='Variable values for the GraphQL query',
-        example={'id': 'cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f'},
+        description="Variable values for the GraphQL query",
+        example={"id": "cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f"},
     )
     operationName: Optional[str] = Field(
-        None, description='Name of the operation', example='ProductById'
+        None, description="Name of the operation", example="ProductById"
     )
 
 
@@ -40,34 +40,37 @@ class AuthenticationRequest(BaseModel):
 
 class AuthenticationResponse(BaseModel):
     X_Hasura_User_Id: str = Field(
-        ..., alias='X-Hasura-User-Id', description='User identifier', example='username'
+        ..., alias="X-Hasura-User-Id", description="User identifier", example="username"
     )
     X_Hasura_Role: str = Field(
-        ..., alias='X-Hasura-Role', description='User role', example='role1'
+        ..., alias="X-Hasura-Role", description="User role", example="role1"
     )
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class Role(BaseModel):
-    role_id: str = Field(..., description='Role id', example='dom1.dp1.0.op.readrole')
+    role_id: str = Field(..., description="Role id", example="dom1.dp1.0.op.readrole")
     component_id: str = Field(
-        ..., description='Component id in Witboost', example='urn:dmb:cmp:dom1:dp1:0:op'
+        ..., description="Component id in Witboost", example="urn:dmb:cmp:dom1:dp1:0:op"
     )
     graphql_root_field_name: str = Field(
-        ..., description='GraphQL root field name in Hasura', example='dom1_dp1_0_op'
+        ..., description="GraphQL root field name in Hasura", example="dom1_dp1_0_op"
     )
 
 
 class UserRoleMappings(BaseModel):
-    role_id: str = Field(..., description='Role id', example='dom1.dp1.0.op.readrole')
+    role_id: str = Field(..., description="Role id", example="dom1.dp1.0.op.readrole")
     users: List[str] = Field(
-        ..., description='User list', example=['user:user1', 'user:user2']
+        ..., description="User list", example=["user:user1", "user:user2"]
     )
 
 
 class GroupRoleMappings(BaseModel):
-    role_id: str = Field(..., description='Role id', example='dom1.dp1.0.op.readrole')
+    role_id: str = Field(..., description="Role id", example="dom1.dp1.0.op.readrole")
     groups: List[str] = Field(
-        ..., description='Group list', example=['group:group1', 'group:group2']
+        ..., description="Group list", example=["group:group1", "group:group2"]
     )
 
 
