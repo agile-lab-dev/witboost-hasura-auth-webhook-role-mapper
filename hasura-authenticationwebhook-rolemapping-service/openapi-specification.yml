@@ -101,14 +101,14 @@ paths:
     put:
       tags:
         - RoleMapper
-      summary: Upsert a role for a given component id and GraphQL root field
+      summary: Upsert a role for a given component id and GraphQL root field list
       operationId: upsert_role
       requestBody:
         description: Role to upsert
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Role"
+              $ref: "#/components/schemas/GraphqlRootFieldNameRoleMappings"
         required: true
       responses:
         200:
@@ -116,7 +116,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Role"
+                $ref: "#/components/schemas/GraphqlRootFieldNameRoleMappings"
         400:
           description: Invalid input
           content:
@@ -139,40 +139,6 @@ paths:
         - name: component_id
           in: path
           description: Component id
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: The requested role
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Role"
-        400:
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidationError"
-        404:
-          description: Requested role not found
-        500:
-          description: System problem
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemError"
-  /v1/roles/graphql_root_field_name/{graphql_root_field_name}:
-    get:
-      tags:
-        - RoleMapper
-      summary: Get role by GraphQL root field name
-      operationId: get_role_by_graphql_root_field_name
-      parameters:
-        - name: graphql_root_field_name
-          in: path
-          description: GraphQL root field name
           required: true
           schema:
             type: string
@@ -320,7 +286,6 @@ components:
       required:
         - role_id
         - component_id
-        - graphql_root_field_name
       properties:
         role_id:
           description: Role id
@@ -330,10 +295,6 @@ components:
           description: Component id in Witboost
           type: string
           example: "urn:dmb:cmp:dom1:dp1:0:op"
-        graphql_root_field_name:
-          description: GraphQL root field name in Hasura
-          type: string
-          example: "dom1_dp1_0_op"
     UserRoleMappings:
       description: Mapping of role to users
       type: object
@@ -373,6 +334,31 @@ components:
           example: [
             "group:group1",
             "group:group2"
+          ]
+    GraphqlRootFieldNameRoleMappings:
+      description: Mapping of role to root field names
+      type: object
+      required:
+        - role_id
+        - component_id
+        - graphql_root_field_names
+      properties:
+        role_id:
+          description: Role id
+          type: string
+          example: "dom1.dp1.0.op.readrole"
+        component_id:
+          description: Component id in Witboost
+          type: string
+          example: "urn:dmb:cmp:dom1:dp1:0:op"
+        graphql_root_field_names:
+          description: Root field name list
+          type: array
+          items:
+            type: string
+          example: [
+            "dom1_dp1_0_op1_select",
+            "dom1_dp1_0_op1_aggregate"
           ]
     ValidationError:
       required:

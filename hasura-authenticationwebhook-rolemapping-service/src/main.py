@@ -20,11 +20,19 @@ from src.jwt.claims_service import ClaimsService
 from src.jwt.concrete_jwt_service import ConcreteJWTService, JWTConfig
 from src.jwt.jwt_service import JWTService
 from src.jwt.membership_service import MembershipService
+from src.repositories.graphql_roles_repository import (
+    GraphqlConfig,
+    GraphqlRoleRepository,
+    RoleNotFoundException,
+    RoleUpsertNotAllowedException,
+)
+from src.repositories.roles_repository import RoleRepository
 from src.utils import setup_logging
 
 from .models import (
     AuthenticationRequest,
     AuthenticationResponse,
+    GraphqlRootFieldNameRoleMappings,
     GroupRoleMappings,
     Role,
     SystemError,
@@ -51,6 +59,12 @@ def get_webhook_handler() -> WebhookHandler:
     membership_service: MembershipService = AzureMembershipService(azure_config)
     claims_service: ClaimsService = AzureClaimsService(membership_service)
     return WebhookHandler(claims_service=claims_service, jwt_service=jwt_service)
+
+
+@lru_cache()
+def get_roles_repository() -> RoleRepository:
+    graphql_config = GraphqlConfig()
+    return GraphqlRoleRepository(graphql_config)
 
 
 @app.post(
@@ -85,17 +99,31 @@ async def authenticate_request(
 
 @app.put(
     "/v1/group_roles",
-    response_model=GroupRoleMappings,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
+    responses={
+        "200": {"model": GroupRoleMappings},
+        "400": {"model": ValidationError},
+        "500": {"model": SystemError},
+    },
     tags=["RoleMapper"],
 )
-def upsert_group_roles(
+async def upsert_group_roles(
     body: GroupRoleMappings,
+    response: Response,
+    roles_repository: Annotated[RoleRepository, Depends(get_roles_repository)],
 ) -> Union[GroupRoleMappings, ValidationError, SystemError]:
     """
     Upsert role mappings for groups; adds mappings for all groups listed but not already present, removes already present mappings for all unlisted groups
     """  # noqa: E501
-    return SystemError(error="error")
+    try:
+        res = await roles_repository.upsert_group_roles(body)
+        return res
+    except RoleNotFoundException as e:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return ValidationError(errors=[e.message])
+    except Exception:
+        logger.exception("Exception in /v1/group_roles")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return SystemError(error="System error")
 
 
 @app.get("/v1/health", response_model=str, tags=["Health"])
@@ -108,70 +136,117 @@ def get_v1_health() -> str:
 
 @app.put(
     "/v1/roles",
-    response_model=Role,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
+    responses={
+        "200": {"model": GraphqlRootFieldNameRoleMappings},
+        "400": {"model": ValidationError},
+        "500": {"model": SystemError},
+    },
     tags=["RoleMapper"],
 )
-def upsert_role(body: Role) -> Union[Role, ValidationError, SystemError]:
+async def upsert_role(
+    body: GraphqlRootFieldNameRoleMappings,
+    response: Response,
+    roles_repository: Annotated[RoleRepository, Depends(get_roles_repository)],
+) -> Union[GraphqlRootFieldNameRoleMappings, ValidationError, SystemError]:
     """
     Upsert a role for a given component id and GraphQL root field
     """
-    return SystemError(error="error")
+    try:
+        res = await roles_repository.upsert_role(body)
+        return res
+    except RoleUpsertNotAllowedException as e:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return ValidationError(errors=[e.message])
+    except Exception:
+        logger.exception("Exception in /v1/roles")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return SystemError(error="System error")
 
 
 @app.get(
     "/v1/roles/component_id/{component_id}",
-    response_model=Role,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
+    responses={
+        "200": {"model": Role},
+        "400": {"model": ValidationError},
+        "404": {"model": str},
+        "500": {"model": SystemError},
+    },
     tags=["RoleMapper"],
 )
-def get_role_by_component_id(
+async def get_role_by_component_id(
     component_id: str,
-) -> Union[Role, ValidationError, SystemError]:
+    response: Response,
+    roles_repository: Annotated[RoleRepository, Depends(get_roles_repository)],
+) -> Union[Role, ValidationError, str, SystemError]:
     """
     Get role by component id
     """
-    return SystemError(error="error")
-
-
-@app.get(
-    "/v1/roles/graphql_root_field_name/{graphql_root_field_name}",
-    response_model=Role,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
-    tags=["RoleMapper"],
-)
-def get_role_by_graphql_root_field_name(
-    graphql_root_field_name: str,
-) -> Union[Role, ValidationError, SystemError]:
-    """
-    Get role by GraphQL root field name
-    """
-    return SystemError(error="error")
+    try:
+        res = await roles_repository.get_role_by_component_id(component_id)
+        return res
+    except RoleNotFoundException as e:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return e.message
+    except Exception:
+        logger.exception("Exception in /v1/roles/component_id/component_id")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return SystemError(error="System error")
 
 
 @app.get(
     "/v1/roles/{role_id}",
-    response_model=Role,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
+    responses={
+        "200": {"model": Role},
+        "400": {"model": ValidationError},
+        "404": {"model": str},
+        "500": {"model": SystemError},
+    },
     tags=["RoleMapper"],
 )
-def get_role_by_id(role_id: str) -> Union[Role, ValidationError, SystemError]:
+async def get_role_by_id(
+    role_id: str,
+    response: Response,
+    roles_repository: Annotated[RoleRepository, Depends(get_roles_repository)],
+) -> Union[Role, ValidationError, str, SystemError]:
     """
     Get role by id
     """
-    return SystemError(error="error")
+    try:
+        res = await roles_repository.get_role_by_role_id(role_id)
+        return res
+    except RoleNotFoundException as e:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return e.message
+    except Exception:
+        logger.exception("Exception in /v1/roles/role_id")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return SystemError(error="System error")
 
 
 @app.put(
     "/v1/user_roles",
-    response_model=UserRoleMappings,
-    responses={"400": {"model": ValidationError}, "500": {"model": SystemError}},
+    responses={
+        "200": {"model": UserRoleMappings},
+        "400": {"model": ValidationError},
+        "500": {"model": SystemError},
+    },
     tags=["RoleMapper"],
 )
-def upsert_user_roles(
+async def upsert_user_roles(
     body: UserRoleMappings,
+    response: Response,
+    roles_repository: Annotated[RoleRepository, Depends(get_roles_repository)],
 ) -> Union[UserRoleMappings, ValidationError, SystemError]:
     """
     Upsert role mappings for users; adds mappings for all users listed but not already present, removes already present mappings for all unlisted users
     """  # noqa: E501
-    return SystemError(error="error")
+    try:
+        res = await roles_repository.upsert_user_roles(body)
+        return res
+    except RoleNotFoundException as e:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return ValidationError(errors=[e.message])
+    except Exception:
+        logger.exception("Exception in /v1/user_roles")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return SystemError(error="System error")
