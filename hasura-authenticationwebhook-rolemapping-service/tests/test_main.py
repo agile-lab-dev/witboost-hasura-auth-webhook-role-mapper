@@ -9,6 +9,7 @@ from src.models import (
     GraphqlRootFieldNameRoleMappings,
     GroupRoleMappings,
     Role,
+    RoleGraphqlRootFieldName,
     UserRoleMappings,
 )
 from src.repositories.roles_repository import RoleRepository
@@ -28,7 +29,11 @@ def get_webhook_handler_for_test() -> WebhookHandler:
         data={"unique_name": "user", "oid": "1234567890"}
     )
     claims_service: ClaimsService = AzureClaimsService(FakeMembershipService(["dev"]))
-    return WebhookHandler(claims_service=claims_service, jwt_service=jwt_service)
+    return WebhookHandler(
+        claims_service=claims_service,
+        jwt_service=jwt_service,
+        role_repository=get_role_repository_for_test(),
+    )
 
 
 app.dependency_overrides[get_webhook_handler] = get_webhook_handler_for_test
@@ -46,11 +51,16 @@ def get_role_repository_for_test() -> RoleRepository:
         component_id="component_id",
         graphql_root_field_names=["graphql_root_field_name1"],
     )
+    role_root = RoleGraphqlRootFieldName(
+        role_id="role_id", graphql_root_field_name="graphql_root_field_name1"
+    )
     return FakeRoleRoleRepository(
         role=role,
         user_role=user_role,
         group_role=group_role,
         root_field_name_role=root_field_name_role,
+        role_graphql_root_field_names=[role_root],
+        roles_by_user_and_groups=["role_id"],
     )
 
 
@@ -69,7 +79,7 @@ class TestAuthenticationWebhook:
             json={
                 "headers": {"Authorization": "Bearer eyJ0eXAiO"},
                 "request": {
-                    "query": "query ProductById($id: uuid!) {\n  products_by_pk(id: $id) {\n    id\n    name\n  }\n}",  # noqa: E501
+                    "query": "query ProductById($id: uuid!) { graphql_root_field_name1(id: $id) { id name }}",  # noqa: E501
                     "variables": {"id": "cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f"},
                     "operationName": "ProductById",
                 },
@@ -78,8 +88,8 @@ class TestAuthenticationWebhook:
 
         assert response.status_code == 200
         assert response.json() == {
-            "X-Hasura-User-Id": "X_Hasura_User_Id",
-            "X-Hasura-Role": "X_Hasura_Role",
+            "X-Hasura-User-Id": "user:user",
+            "X-Hasura-Role": "role_id",
         }
 
     def test_authenticate_request_unauthorized(self):
@@ -96,6 +106,21 @@ class TestAuthenticationWebhook:
         )
 
         assert response.status_code == 401
+
+    def test_authenticate_request_400_query_not_valid(self):
+        response = client.post(
+            "/v1/authenticate",
+            json={
+                "headers": {"Authorization": "Bearer eyJ0eXAiO"},
+                "request": {
+                    "query": "query_not_valid ProductById($id: uuid!) { graphql_root_field_name1(id: $id) { id name }}",  # noqa: E501
+                    "variables": {"id": "cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f"},
+                    "operationName": "ProductById",
+                },
+            },
+        )
+
+        assert response.status_code == 400
 
 
 class TestRoleMapper:

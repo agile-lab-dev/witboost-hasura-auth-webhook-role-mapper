@@ -80,3 +80,23 @@ mutation_delete_group_role = """
                   }
                 }
             """
+
+query_get_roles_by_user_and_groups = """
+                query GetRolesByUserAndGroups($user: String!, $groups: [String!]) {
+                  user_roles(where: {user: {_eq: $user}}, distinct_on: role_id) {
+                    role_id
+                  }
+                  group_roles(where: {group: {_in: $groups}}, distinct_on: role_id) {
+                    role_id
+                  }
+                }
+            """
+
+query_get_role_graphql_root_field_names = """
+                query GetRoleGraphqlRootFieldNames($graphql_root_field_names: [String!]) {
+                  role_graphql_root_field_names(where: {graphql_root_field_name: {_in: $graphql_root_field_names}}) {
+                    graphql_root_field_name
+                    role_id
+                  }
+                }
+            """

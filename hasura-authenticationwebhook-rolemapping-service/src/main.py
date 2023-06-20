@@ -12,6 +12,7 @@ from fastapi import Depends, FastAPI, Response, status
 
 from src.handlers.webhook_handler import (
     WebhookHandler,
+    WebhookHandlerInvalidQueryException,
     WebhookHandlerUnauthorizedException,
 )
 from src.jwt.azure_claims_service import AzureClaimsService
@@ -55,10 +56,16 @@ app = FastAPI(
 def get_webhook_handler() -> WebhookHandler:
     jwt_config = JWTConfig()
     azure_config = AzureConfig()
+    graphql_config = GraphqlConfig()
     jwt_service: JWTService = ConcreteJWTService(jwt_config)
     membership_service: MembershipService = AzureMembershipService(azure_config)
     claims_service: ClaimsService = AzureClaimsService(membership_service)
-    return WebhookHandler(claims_service=claims_service, jwt_service=jwt_service)
+    role_repository: RoleRepository = GraphqlRoleRepository(graphql_config)
+    return WebhookHandler(
+        claims_service=claims_service,
+        jwt_service=jwt_service,
+        role_repository=role_repository,
+    )
 
 
 @lru_cache()
@@ -91,6 +98,9 @@ async def authenticate_request(
     except WebhookHandlerUnauthorizedException:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Unauthorized"
+    except WebhookHandlerInvalidQueryException as iqe:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return ValidationError(errors=[iqe.message])
     except Exception:
         logger.exception("Exception in /v1/authenticate")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

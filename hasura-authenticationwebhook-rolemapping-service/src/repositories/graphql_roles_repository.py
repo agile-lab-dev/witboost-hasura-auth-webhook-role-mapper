@@ -8,6 +8,7 @@ from src.models import (
     GraphqlRootFieldNameRoleMappings,
     GroupRoleMappings,
     Role,
+    RoleGraphqlRootFieldName,
     UserRoleMappings,
 )
 from src.repositories.queries_mutations import (
@@ -20,6 +21,8 @@ from src.repositories.queries_mutations import (
     mutation_upsert_user_role,
     query_get_role_by_component_id,
     query_get_role_by_role_id,
+    query_get_role_graphql_root_field_names,
+    query_get_roles_by_user_and_groups,
 )
 from src.repositories.roles_repository import RoleRepository
 
@@ -200,3 +203,42 @@ class GraphqlRoleRepository(RoleRepository):
             await session.execute(delete_mutation, variable_values=delete_params)
 
             return GroupRoleMappings(role_id=role.role_id, groups=groups)
+
+    async def get_roles_by_user_and_groups(
+        self, user: str, groups: list[str]
+    ) -> list[str]:
+        async with Client(
+            transport=self.transport,
+            fetch_schema_from_transport=True,
+        ) as session:
+            query = gql(query_get_roles_by_user_and_groups)
+            params = {"user": user, "groups": groups}
+            result = await session.execute(query, variable_values=params)
+            roles: list[str] = []
+            if len(result["user_roles"]) > 0:
+                roles.extend([r["role_id"] for r in result["user_roles"]])
+            if len(result["group_roles"]) > 0:
+                roles.extend([r["role_id"] for r in result["group_roles"]])
+            return list(dict.fromkeys(roles))
+
+    async def get_role_graphql_root_field_names(
+        self, graphql_root_field_names: list[str]
+    ) -> list[RoleGraphqlRootFieldName]:
+        async with Client(
+            transport=self.transport,
+            fetch_schema_from_transport=True,
+        ) as session:
+            query = gql(query_get_role_graphql_root_field_names)
+            params = {
+                "graphql_root_field_names": graphql_root_field_names,
+            }
+            result = await session.execute(query, variable_values=params)
+            roles: list[RoleGraphqlRootFieldName] = []
+            if len(result["role_graphql_root_field_names"]) > 0:
+                roles.extend(
+                    [
+                        RoleGraphqlRootFieldName.parse_obj(r)
+                        for r in result["role_graphql_root_field_names"]
+                    ]
+                )
+            return roles

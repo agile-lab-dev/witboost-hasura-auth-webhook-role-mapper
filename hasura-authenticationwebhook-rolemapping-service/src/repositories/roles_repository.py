@@ -4,6 +4,7 @@ from src.models import (
     GraphqlRootFieldNameRoleMappings,
     GroupRoleMappings,
     Role,
+    RoleGraphqlRootFieldName,
     UserRoleMappings,
 )
 
@@ -84,5 +85,34 @@ class RoleRepository(ABC):
 
         Raises:
             RoleNotFoundException: if the corresponding role doesn't exist
+        """
+        pass
+
+    @abstractmethod
+    async def get_roles_by_user_and_groups(
+        self, user: str, groups: list[str]
+    ) -> list[str]:
+        """Returns the role set of the user
+
+        Args:
+            user: The user, as defined in Witboost
+            groups: The user's groups
+
+        Returns:
+            The role set of the user
+        """
+        pass
+
+    @abstractmethod
+    async def get_role_graphql_root_field_names(
+        self, graphql_root_field_names: list[str]
+    ) -> list[RoleGraphqlRootFieldName]:
+        """Return the role and the root field name list
+
+        Args:
+            graphql_root_field_names: The root field names to use as filter
+
+        Returns:
+            The role and the root field name list
         """
         pass

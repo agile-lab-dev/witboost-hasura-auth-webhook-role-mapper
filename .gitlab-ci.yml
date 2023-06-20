@@ -101,7 +101,7 @@ run_tests:
     - poetry lock --no-update
     - poetry install
   script:
-    - poetry run pytest --cov=src/ tests/. --cov-report=xml
+    - poetry run pytest --cov=src/ tests/. --cov-report=xml --cov-report=term
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     reports:

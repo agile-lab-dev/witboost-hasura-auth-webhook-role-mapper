@@ -105,6 +105,36 @@ async def upsert_group_role_mock_execute_data(*args, **kwargs):
     )
 
 
+async def roles_by_user_and_groups_mock_execute(*args, **kwargs):
+    return ExecutionResult(
+        data={
+            "user_roles": [
+                {
+                    "role_id": "role_id",
+                }
+            ],
+            "group_roles": [
+                {
+                    "role_id": "role_id",
+                }
+            ],
+        }
+    )
+
+
+async def role_graphql_root_field_names_mock_execute(*args, **kwargs):
+    return ExecutionResult(
+        data={
+            "role_graphql_root_field_names": [
+                {
+                    "role_id": "role_id",
+                    "graphql_root_field_name": "graphql_root_field_name",
+                }
+            ]
+        }
+    )
+
+
 class TestGraphqlRolesRepository:
     config = GraphqlConfig(
         graphql_url="http://unused",
@@ -205,3 +235,30 @@ class TestGraphqlRolesRepository:
 
         assert group_role.role_id == "role_id"
         assert group_role.groups == ["group:group1"]
+
+    @pytest.mark.asyncio
+    async def test_get_roles_by_user_and_groups_ok(self, monkeypatch, monkeypatch_base):
+        monkeypatch.setattr(
+            AIOHTTPTransport, "execute", roles_by_user_and_groups_mock_execute
+        )
+
+        result = await self.repo.get_roles_by_user_and_groups("user1", ["group1"])
+
+        assert len(result) == 1
+        assert result[0] == "role_id"
+
+    @pytest.mark.asyncio
+    async def test_get_role_graphql_root_field_names_ok(
+        self, monkeypatch, monkeypatch_base
+    ):
+        monkeypatch.setattr(
+            AIOHTTPTransport, "execute", role_graphql_root_field_names_mock_execute
+        )
+
+        result = await self.repo.get_role_graphql_root_field_names(
+            ["graphql_root_field_name"]
+        )
+
+        assert len(result) == 1
+        assert result[0].role_id == "role_id"
+        assert result[0].graphql_root_field_name == "graphql_root_field_name"

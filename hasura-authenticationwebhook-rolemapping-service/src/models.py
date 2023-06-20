@@ -83,6 +83,13 @@ class GraphqlRootFieldNameRoleMappings(BaseModel):
     )
 
 
+class RoleGraphqlRootFieldName(BaseModel):
+    role_id: str = Field(..., description="Role id", example="dom1.dp1.0.op.readrole")
+    graphql_root_field_name: str = Field(
+        ..., description="Root field name", example="dom1_dp1_0_op"
+    )
+
+
 class ValidationError(BaseModel):
     errors: List[str]
 
