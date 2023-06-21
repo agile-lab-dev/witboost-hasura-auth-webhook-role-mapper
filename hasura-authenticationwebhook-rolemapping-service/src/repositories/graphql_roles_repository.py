@@ -52,18 +52,20 @@ class RoleUpsertNotAllowedException(Exception):
 class GraphqlRoleRepository(RoleRepository):
     def __init__(self, config: GraphqlConfig):
         self.config = config
-        self.transport = AIOHTTPTransport(
+        self.logger = logging.getLogger(__name__)
+
+    def _get_transport(self) -> AIOHTTPTransport:
+        return AIOHTTPTransport(
             url=self.config.graphql_url,
             headers={
                 "X-Hasura-Role": self.config.graphql_role,
                 "X-Hasura-Admin-Secret": self.config.graphql_admin_secret,
             },
         )
-        self.logger = logging.getLogger(__name__)
 
     async def get_role_by_role_id(self, role_id: str) -> Role:
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             query = gql(query_get_role_by_role_id)
@@ -75,7 +77,7 @@ class GraphqlRoleRepository(RoleRepository):
 
     async def get_role_by_component_id(self, component_id: str) -> Role:
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             query = gql(query_get_role_by_component_id)
@@ -91,7 +93,7 @@ class GraphqlRoleRepository(RoleRepository):
         self, role: GraphqlRootFieldNameRoleMappings
     ) -> GraphqlRootFieldNameRoleMappings:
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             # upsert on table roles
@@ -151,7 +153,7 @@ class GraphqlRoleRepository(RoleRepository):
         await self.get_role_by_role_id(role.role_id)
 
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             upsert_mutation = gql(mutation_upsert_user_role)
@@ -180,7 +182,7 @@ class GraphqlRoleRepository(RoleRepository):
         await self.get_role_by_role_id(role.role_id)
 
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             upsert_mutation = gql(mutation_upsert_group_role)
@@ -208,7 +210,7 @@ class GraphqlRoleRepository(RoleRepository):
         self, user: str, groups: list[str]
     ) -> list[str]:
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             query = gql(query_get_roles_by_user_and_groups)
@@ -225,7 +227,7 @@ class GraphqlRoleRepository(RoleRepository):
         self, graphql_root_field_names: list[str]
     ) -> list[RoleGraphqlRootFieldName]:
         async with Client(
-            transport=self.transport,
+            transport=self._get_transport(),
             fetch_schema_from_transport=True,
         ) as session:
             query = gql(query_get_role_graphql_root_field_names)
