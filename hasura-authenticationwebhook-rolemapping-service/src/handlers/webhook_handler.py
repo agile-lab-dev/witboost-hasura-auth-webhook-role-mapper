@@ -78,7 +78,7 @@ class WebhookHandler:
             WebhookHandlerInvalidQueryException: if the graphql query has syntax errors
         """
         try:
-            token = self.get_token(authentication_request.headers.Authorization)
+            token = self.get_token(authentication_request.headers.authorization)
             self.jwt_service.validate(token)
             payload = self.jwt_service.get_payload(token)
             jwt_user = await self.claims_service.get_user(payload)

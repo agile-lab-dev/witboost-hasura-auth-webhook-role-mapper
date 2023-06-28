@@ -239,9 +239,9 @@ components:
         headers:
           type: object
           required:
-            - Authorization
+            - authorization
           properties:
-            Authorization:
+            authorization:
               description: Standard HTTP Authorization header, Bearer schema, with JWT token
               type: string
               example:

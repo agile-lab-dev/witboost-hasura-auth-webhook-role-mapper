@@ -77,7 +77,7 @@ class TestAuthenticationWebhook:
         response = client.post(
             "/v1/authenticate",
             json={
-                "headers": {"Authorization": "Bearer eyJ0eXAiO"},
+                "headers": {"authorization": "Bearer eyJ0eXAiO"},
                 "request": {
                     "query": "query ProductById($id: uuid!) { graphql_root_field_name1(id: $id) { id name }}",  # noqa: E501
                     "variables": {"id": "cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f"},
@@ -96,7 +96,7 @@ class TestAuthenticationWebhook:
         response = client.post(
             "/v1/authenticate",
             json={
-                "headers": {"Authorization": "Invalid"},
+                "headers": {"authorization": "Invalid"},
                 "request": {
                     "query": "query ProductById($id: uuid!) {\n  products_by_pk(id: $id) {\n    id\n    name\n  }\n}",  # noqa: E501
                     "variables": {"id": "cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f"},
@@ -111,7 +111,7 @@ class TestAuthenticationWebhook:
         response = client.post(
             "/v1/authenticate",
             json={
-                "headers": {"Authorization": "Bearer eyJ0eXAiO"},
+                "headers": {"authorization": "Bearer eyJ0eXAiO"},
                 "request": {
                     "query": "query_not_valid ProductById($id: uuid!) { graphql_root_field_name1(id: $id) { id name }}",  # noqa: E501
                     "variables": {"id": "cd6be51c-65b6-11ed-a2f4-4b71f0d3d70f"},

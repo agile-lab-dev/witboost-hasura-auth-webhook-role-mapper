@@ -174,7 +174,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_fail_on_invalid_token(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(Authorization=""), request=Request(query="")
+            headers=Headers(authorization=""), request=Request(query="")
         )
 
         with pytest.raises(WebhookHandlerUnauthorizedException):
@@ -183,7 +183,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_ok(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(Authorization=self.authorization_header),
+            headers=Headers(authorization=self.authorization_header),
             request=Request(
                 query="query ProductById($id: uuid!) { graphql_root_field_name1(id: $id) { id name }}"  # noqa: E501
             ),
@@ -197,7 +197,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_root_field_not_authorized(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(Authorization=self.authorization_header),
+            headers=Headers(authorization=self.authorization_header),
             request=Request(
                 query="query ProductById($id: uuid!) { root_field_not_authorized(id: $id) { id name }}"  # noqa: E501
             ),
@@ -209,7 +209,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_invalid_query(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(Authorization=self.authorization_header),
+            headers=Headers(authorization=self.authorization_header),
             request=Request(
                 query="query_invalid ProductById($id: uuid!) { root_field_not_authorized(id: $id) { id name }}"  # noqa: E501
             ),
