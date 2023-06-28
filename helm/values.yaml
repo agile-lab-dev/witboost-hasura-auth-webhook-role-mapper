@@ -1,0 +1,47 @@
+# Default values for python-specific-provisioner.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Docker Registry Secret name used to access a private repo
+dockerRegistrySecretName: regcred
+# -- Allows you to specify common labels
+labels: {}
+
+image:
+  # -- Image repository
+  registry: registry.gitlab.com/agilefactory/witboost.mesh/provisioning/witboost.mesh.provisioning.hasuraauthenticationwebhookrolemappingservice
+  # -- Image tag
+  tag: 0.0.0-SNAPSHOT.1c7dfeb.accomodate-mr-commen
+  # -- The imagePullPolicy for a container and the tag of the image affect when the kubelet attempts to pull (download) the specified image.
+  pullPolicy: Always
+
+# -- graphql instance
+graphql:
+  url: 'http://hasura-ee:8080/v1/graphql'
+  role: admin
+
+# -- jwt
+jwt:
+  jwk_url: 'https://login.microsoftonline.com/common/discovery/v2.0/keys'
+  audience: 'https://management.core.windows.net/'
+  algo: '["RS256", "RS512"]'
+  options: '{"verify_exp": false,"require": ["exp", "iat"]}'
+  scopes: '["https://graph.microsoft.com/.default"]'
+
+# -- readiness probe spec
+readinessProbe: {}
+
+# -- liveness probe spec
+livenessProbe: {}
+
+# -- security context spec
+securityContext:
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+
+# -- resources spec
+resources: {}
+
+# -- logging override
+loggingFileOverride: {}

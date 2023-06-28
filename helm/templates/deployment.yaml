@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "pythonsp.name" . }}
+{{- include "pythonsp.labels" . | nindent 4 }}
+  name: {{ template "pythonsp.fullname" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "pythonsp.name" . }}
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: {{ template "pythonsp.name" . }}
+{{- include "pythonsp.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      {{- if .Values.dockerRegistrySecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.dockerRegistrySecretName }}
+      {{- end}}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "pythonsp.name" . }}-config
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.registry }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5002
+              protocol: TCP
+          {{- if .Values.securityContext }}
+          securityContext: {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: GRAPHQL_URL
+              value: {{ .Values.graphql.url }}
+            - name: GRAPHQL_ROLE
+              value: {{ .Values.graphql.role }}
+            - name: GRAPHQL_ADMIN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  key: GRAPHQL_ADMIN_SECRET
+            - name: JWKS_URL
+              value: {{ .Values.jwt.jwk_url }}
+            - name: JWT_AUDIENCE
+              value: {{ .Values.jwt.audience }}
+            - name: JWT_ALGORITHMS
+              value: {{ .Values.jwt.algo | quote }}
+            - name: JWT_OPTIONS
+              value: {{ .Values.jwt.options | quote }}
+            - name: AZURE_SCOPES
+              value: {{ .Values.jwt.scopes | quote }}
+            - name: AZURE_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  key: AZURE_TENANT_ID
+            - name: AZURE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  key: AZURE_CLIENT_ID
+            - name: AZURE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  key: AZURE_CLIENT_SECRET
+            - name: LOG_CFG
+              value: /opt/docker/etc/configs/logging.yaml
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: config
+              mountPath: /opt/docker/etc/configs
