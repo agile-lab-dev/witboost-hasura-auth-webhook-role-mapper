@@ -28,6 +28,9 @@ jwt:
   options: '{"verify_exp": false,"require": ["exp", "iat"]}'
   scopes: '["https://graph.microsoft.com/.default"]'
 
+authorization:
+  header_field_names: '["authorization", "Authorization"]'
+
 # -- readiness probe spec
 readinessProbe: {}
 

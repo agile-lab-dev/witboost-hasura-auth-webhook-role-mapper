@@ -1,6 +1,7 @@
 import pytest
 
 from src.handlers.webhook_handler import (
+    WebhookConfig,
     WebhookHandler,
     WebhookHandlerInvalidQueryException,
     WebhookHandlerUnauthorizedException,
@@ -11,7 +12,6 @@ from src.models import (
     AuthenticationRequest,
     GraphqlRootFieldNameRoleMappings,
     GroupRoleMappings,
-    Headers,
     Request,
     Role,
     RoleGraphqlRootFieldName,
@@ -53,6 +53,9 @@ class TestWebhookHandler:
         claims_service=claims_service,
         jwt_service=jwt_service,
         role_repository=role_repository,
+        webhook_config=WebhookConfig(
+            authorization_header_field_names=["Authorization", "authorization"]
+        ),
     )
 
     has_access_to_all_root_field_names_data = [
@@ -164,17 +167,29 @@ class TestWebhookHandler:
 
     def test_get_token_fail_on_invalid_header(self):
         with pytest.raises(ValueError):
-            self.webhook_handler.get_token("Invalid token")
+            self.webhook_handler.get_token({"authorization": "Invalid token"})
 
-    def test_get_token_ok(self):
-        token = self.webhook_handler.get_token(self.authorization_header)
+    def test_get_token_fail_on_header_not_present(self):
+        with pytest.raises(ValueError):
+            self.webhook_handler.get_token({})
+
+    def test_get_token_fail_on_different_header_name(self):
+        with pytest.raises(ValueError):
+            self.webhook_handler.get_token({"auth": self.authorization_header})
+
+    @pytest.mark.parametrize(
+        "header_name",
+        ["authorization", "Authorization"],
+    )
+    def test_get_token_ok(self, header_name: str):
+        token = self.webhook_handler.get_token({header_name: self.authorization_header})
 
         assert token == self.token
 
     @pytest.mark.asyncio
     async def test_authenticate_request_fail_on_invalid_token(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(authorization=""), request=Request(query="")
+            headers={"authorization": ""}, request=Request(query="")
         )
 
         with pytest.raises(WebhookHandlerUnauthorizedException):
@@ -183,7 +198,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_ok(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(authorization=self.authorization_header),
+            headers={"authorization": self.authorization_header},
             request=Request(
                 query="query ProductById($id: uuid!) { graphql_root_field_name1(id: $id) { id name }}"  # noqa: E501
             ),
@@ -197,7 +212,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_root_field_not_authorized(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(authorization=self.authorization_header),
+            headers={"authorization": self.authorization_header},
             request=Request(
                 query="query ProductById($id: uuid!) { root_field_not_authorized(id: $id) { id name }}"  # noqa: E501
             ),
@@ -209,7 +224,7 @@ class TestWebhookHandler:
     @pytest.mark.asyncio
     async def test_authenticate_request_invalid_query(self):
         auth_request = AuthenticationRequest(
-            headers=Headers(authorization=self.authorization_header),
+            headers={"authorization": self.authorization_header},
             request=Request(
                 query="query_invalid ProductById($id: uuid!) { root_field_not_authorized(id: $id) { id name }}"  # noqa: E501
             ),

@@ -14,6 +14,7 @@ A Helm chart for Kubernetes
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| authorization.header_field_names | string | `"[\"authorization\", \"Authorization\"]"` |  |
 | dockerRegistrySecretName | string | `"regcred"` | Docker Registry Secret name used to access a private repo |
 | graphql | object | `{"role":"admin","url":"http://hasura-ee:8080/v1/graphql"}` | graphql instance |
 | image.pullPolicy | string | `"Always"` | The imagePullPolicy for a container and the tag of the image affect when the kubelet attempts to pull (download) the specified image. |

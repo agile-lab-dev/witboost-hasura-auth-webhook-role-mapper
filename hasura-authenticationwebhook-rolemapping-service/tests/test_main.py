@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from src.handlers.webhook_handler import WebhookHandler
+from src.handlers.webhook_handler import WebhookConfig, WebhookHandler
 from src.jwt.azure_claims_service import AzureClaimsService
 from src.jwt.claims_service import ClaimsService
 from src.jwt.jwt_service import JWTService
@@ -33,6 +33,9 @@ def get_webhook_handler_for_test() -> WebhookHandler:
         claims_service=claims_service,
         jwt_service=jwt_service,
         role_repository=get_role_repository_for_test(),
+        webhook_config=WebhookConfig(
+            authorization_header_field_names=["authorization"]
+        ),
     )
 
 

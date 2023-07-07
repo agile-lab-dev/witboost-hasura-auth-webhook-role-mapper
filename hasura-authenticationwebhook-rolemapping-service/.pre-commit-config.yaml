@@ -40,3 +40,5 @@ repos:
     rev: v1.1.1
     hooks:
     -   id: mypy
+
+exclude: ^helm/templates/

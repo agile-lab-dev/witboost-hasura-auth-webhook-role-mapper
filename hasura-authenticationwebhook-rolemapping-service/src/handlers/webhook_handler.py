@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, List
 
 from gql import gql
 from graphql import (
@@ -8,6 +9,7 @@ from graphql import (
     OperationDefinitionNode,
     OperationType,
 )
+from pydantic import BaseSettings
 
 from src.jwt.claims_service import ClaimsService
 from src.jwt.jwt_service import JWTService
@@ -31,34 +33,54 @@ class WebhookHandlerInvalidQueryException(Exception):
         return self.message
 
 
+class WebhookConfig(BaseSettings):
+    authorization_header_field_names: List[str]
+
+
 class WebhookHandler:
     def __init__(
         self,
         claims_service: ClaimsService,
         jwt_service: JWTService,
         role_repository: RoleRepository,
+        webhook_config: WebhookConfig,
     ):
         self.claims_service = claims_service
         self.jwt_service = jwt_service
         self.role_repository = role_repository
+        self.webhook_config = webhook_config
         self.PREFIX = "Bearer"
         self.logger = logging.getLogger(__name__)
 
-    def get_token(self, authorization_header: str) -> str:
-        """Extracts the JWT token from Authorization Header string
+    def get_token(self, headers: Dict[str, str]) -> str:
+        """Extracts the JWT token from headers
 
         Args:
-            authorization_header: Authorization Header containing bearer token
+            headers: request headers
 
         Returns:
             The JWT token
 
         Raises:
-            ValueError: if the Authorization Header is not valid
+            ValueError: if the Authorization Header is not valid or not present
         """
-        bearer, _, token = authorization_header.partition(" ")
+        authorization_headers = [
+            x
+            for x in [
+                headers.get(n)
+                for n in self.webhook_config.authorization_header_field_names
+            ]
+            if x is not None
+        ]
+        if len(authorization_headers) == 0:
+            err_msg = f"authorization header not found. Searched in {self.webhook_config.authorization_header_field_names}"  # noqa: E501
+            self.logger.error(err_msg)
+            raise ValueError(err_msg)
+        bearer, _, token = authorization_headers[0].partition(" ")
         if bearer != self.PREFIX:
-            self.logger.error(f"Invalid Authorization Header: {authorization_header}")
+            self.logger.error(
+                f"Invalid Authorization Header: {authorization_headers[0]}"
+            )
             raise ValueError("Invalid Authorization Header")
         return token
 
@@ -78,7 +100,7 @@ class WebhookHandler:
             WebhookHandlerInvalidQueryException: if the graphql query has syntax errors
         """
         try:
-            token = self.get_token(authentication_request.headers.authorization)
+            token = self.get_token(authentication_request.headers)
             self.jwt_service.validate(token)
             payload = self.jwt_service.get_payload(token)
             jwt_user = await self.claims_service.get_user(payload)

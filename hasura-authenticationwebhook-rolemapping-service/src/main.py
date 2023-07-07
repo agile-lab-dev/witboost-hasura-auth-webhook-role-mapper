@@ -11,6 +11,7 @@ from typing import Annotated, Union
 from fastapi import Depends, FastAPI, Response, status
 
 from src.handlers.webhook_handler import (
+    WebhookConfig,
     WebhookHandler,
     WebhookHandlerInvalidQueryException,
     WebhookHandlerUnauthorizedException,
@@ -61,10 +62,12 @@ def get_webhook_handler() -> WebhookHandler:
     membership_service: MembershipService = AzureMembershipService(azure_config)
     claims_service: ClaimsService = AzureClaimsService(membership_service)
     role_repository: RoleRepository = GraphqlRoleRepository(graphql_config)
+    webhook_config: WebhookConfig = WebhookConfig()
     return WebhookHandler(
         claims_service=claims_service,
         jwt_service=jwt_service,
         role_repository=role_repository,
+        webhook_config=webhook_config,
     )
 
 

@@ -238,14 +238,9 @@ components:
       properties:
         headers:
           type: object
-          required:
-            - authorization
-          properties:
-            authorization:
-              description: Standard HTTP Authorization header, Bearer schema, with JWT token
-              type: string
-              example:
-                "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+          description: Must contain at least the JWT token for the authorization
+          additionalProperties:
+            type: string
         request:
           type: object
           required:
