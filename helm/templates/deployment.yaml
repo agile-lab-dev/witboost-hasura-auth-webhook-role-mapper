@@ -89,6 +89,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: AUTHORIZATION_HEADER_FIELD_NAMES
               value: {{ .Values.authorization.header_field_names | quote }}
+            - name: ROLEMAPPING_TABLE_SCHEMA
+              value: {{ .Values.rolemapping.table_schema }}
           volumeMounts:
             - name: config
               mountPath: /opt/docker/etc/configs

@@ -31,6 +31,9 @@ jwt:
 authorization:
   header_field_names: '["authorization", "Authorization"]'
 
+rolemapping:
+  table_schema: rolemapping
+
 # -- readiness probe spec
 readinessProbe: {}
 

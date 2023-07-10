@@ -26,6 +26,7 @@ A Helm chart for Kubernetes
 | loggingFileOverride | object | `{}` | logging override |
 | readinessProbe | object | `{}` | readiness probe spec |
 | resources | object | `{}` | resources spec |
+| rolemapping.table_schema | string | `"rolemapping"` |  |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true,"runAsUser":1001}` | security context spec |
 
 ----------------------------------------------
