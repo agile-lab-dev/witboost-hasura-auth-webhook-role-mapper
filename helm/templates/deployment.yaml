@@ -69,17 +69,17 @@ spec:
             - name: AZURE_TENANT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  name: witboost-addons-secrets
                   key: AZURE_TENANT_ID
             - name: AZURE_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  name: witboost-addons-secrets
                   key: AZURE_CLIENT_ID
             - name: AZURE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  name: witboost-addons-secrets
                   key: AZURE_CLIENT_SECRET
             - name: LOG_CFG
               value: /opt/docker/etc/configs/logging.yaml
