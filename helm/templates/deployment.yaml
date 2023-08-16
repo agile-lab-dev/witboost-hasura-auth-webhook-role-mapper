@@ -54,7 +54,7 @@ spec:
             - name: GRAPHQL_ADMIN_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-hasura-webhook-rolemapper-secrets
+                  name: witboost-addons-secrets
                   key: GRAPHQL_ADMIN_SECRET
             - name: JWKS_URL
               value: {{ .Values.jwt.jwk_url }}
