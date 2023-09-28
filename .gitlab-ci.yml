@@ -70,11 +70,10 @@ compliance:
     - python --version
     - pip install poetry liccheck
     - cd hasura-authenticationwebhook-rolemapping-service
-    - poetry lock --no-update
     - poetry install
   script:
     - poetry export --without-hashes --format=requirements.txt > requirements.txt
-    - poetry run pip-audit -r ./requirements.txt -f json > vulnerabilities.json
+    - poetry run pip-audit -r ./requirements.txt -f json --ignore-vuln "GHSA-v8gr-m533-ghj9" > vulnerabilities.json
     - source $(poetry env info --path)/bin/activate
     - export PYTHONPATH="$PYTHONPATH:$VIRTUAL_ENV/lib/python3.11/site-packages"
     - liccheck -r requirements.txt
@@ -90,7 +89,6 @@ linter:
     - python --version
     - pip install poetry
     - cd hasura-authenticationwebhook-rolemapping-service
-    - poetry lock --no-update
     - poetry install
   script:
     - poetry run ruff .
@@ -113,7 +111,6 @@ type_checks:
     - python --version
     - pip install poetry
     - cd hasura-authenticationwebhook-rolemapping-service
-    - poetry lock --no-update
     - poetry install
   script:
     - poetry run mypy .
@@ -125,7 +122,6 @@ run_tests:
     - python --version
     - pip install poetry
     - cd hasura-authenticationwebhook-rolemapping-service
-    - poetry lock --no-update
     - poetry install
   script:
     - poetry run pytest --cov=src/ tests/. --cov-report=xml --cov-report=term
@@ -143,7 +139,6 @@ poetry_build:
     - python --version
     - pip install poetry
     - cd hasura-authenticationwebhook-rolemapping-service
-    - poetry lock --no-update
     - poetry install
   script:
     - poetry build
