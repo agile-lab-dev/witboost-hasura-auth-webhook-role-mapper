@@ -15,8 +15,8 @@ fastapi-code-generator = "^0.4.1"
 fastapi = {extras = ["all"], version = "^0.95.2"}
 pre-commit = "^3.1.1"
 ruff = "^0.0.255"
-opentelemetry-distro = "^0.38b0"
-opentelemetry-instrumentation-fastapi = "0.38b0"
+opentelemetry-distro = "^0.41b0"
+opentelemetry-instrumentation-fastapi = "0.41b0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.17.0"
 opentelemetry-exporter-otlp = "^1.17.0"
 pip-audit = "^2.5.3"
@@ -29,6 +29,7 @@ gql = {extras = ["aiohttp"], version = "^3.4.1"}
 certifi = "^2023.7.22"
 cryptography = "^41.0.2"
 aiohttp = "^3.8.5"
+urllib3 = ">=1.26.17"
 
 [tool.ruff]
 select = ["E", "F", "I"]
@@ -49,6 +50,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.liccheck]
 authorized_licenses = [
+    'Apache-2.0',
     'apache license 2.0',
     'apache software',
     'bsd',
@@ -62,7 +64,8 @@ authorized_licenses = [
     'python software foundation',
     'the unlicense (unlicense)',
     '3-clause bsd',
-    'BSD-3-Clause'
+    'BSD-3-Clause',
+    'BSD-2-Clause'
 ]
 unauthorized_licenses = [
     "gnu general public license v2 (gplv2)"
