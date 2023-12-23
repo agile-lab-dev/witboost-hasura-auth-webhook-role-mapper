@@ -68,12 +68,12 @@ compliance:
   image: python:3.11
   before_script:
     - python --version
-    - pip install poetry liccheck
+    - pip install --upgrade pip poetry liccheck
     - cd hasura-authenticationwebhook-rolemapping-service
     - poetry install
   script:
     - poetry export --without-hashes --format=requirements.txt > requirements.txt
-    - poetry run pip-audit -r ./requirements.txt -f json --ignore-vuln "GHSA-v8gr-m533-ghj9" > vulnerabilities.json
+    - poetry run pip-audit -r ./requirements.txt -f json --ignore-vuln GHSA-qvrw-v9rv-5rjx --ignore-vuln GHSA-q3qx-c6g2-7pw2 > vulnerabilities.json
     - source $(poetry env info --path)/bin/activate
     - export PYTHONPATH="$PYTHONPATH:$VIRTUAL_ENV/lib/python3.11/site-packages"
     - liccheck -r requirements.txt

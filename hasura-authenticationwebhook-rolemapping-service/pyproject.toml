@@ -14,22 +14,23 @@ mypy = "^1.1.1"
 fastapi-code-generator = "^0.4.1"
 fastapi = {extras = ["all"], version = "^0.95.2"}
 pre-commit = "^3.1.1"
-ruff = "^0.0.255"
-opentelemetry-distro = "^0.41b0"
-opentelemetry-instrumentation-fastapi = "0.41b0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.17.0"
-opentelemetry-exporter-otlp = "^1.17.0"
+ruff = "^0.1.9"
+opentelemetry-distro = "^0.43b0"
+opentelemetry-instrumentation-fastapi = "0.43b0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.22.0"
+opentelemetry-exporter-otlp = "^1.22.0"
 pip-audit = "^2.5.3"
 pytest-cov = "^4.0.0"
 pyjwt = {version = "^2.7.0", extras = ["crypto"]}
-msgraph-sdk = "1.0.0a12"
-pytest-asyncio = "^0.21.0"
+msgraph-sdk = "1.0.0"
+pytest-asyncio = "^0.23.2"
 pyyaml = ">=6.0.1"
 gql = {extras = ["aiohttp"], version = "^3.4.1"}
 certifi = "^2023.7.22"
-cryptography = "^41.0.2"
-aiohttp = "^3.8.5"
-urllib3 = ">=1.26.17"
+cryptography = "^41.0.7"
+aiohttp = "^3.8.6"
+urllib3 = ">=1.26.18"
+time-machine = ">=2.13.0"
 
 [tool.ruff]
 select = ["E", "F", "I"]

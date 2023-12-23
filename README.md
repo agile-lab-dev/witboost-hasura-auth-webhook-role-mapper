@@ -1,14 +1,49 @@
-# Hasura Specific Provisioner
+<br/>
+<p align="center">
+    <a href="https://www.agilelab.it/witboost">
+        <img src="docs/img/witboost_logo.svg" alt="witboost" width=600 >
+    </a>
+</p>
+<br/>
 
-This Python microservice is the responsible for Hasura webhook-based authentication and role mapping.
+Designed by [Agile Lab](https://www.agilelab.it/), Witboost is a versatile platform that addresses a wide range of sophisticated data engineering challenges. It enables businesses to discover, enhance, and productize their data, fostering the creation of automated data platforms that adhere to the highest standards of data governance. Want to know more about Witboost? Check it out [here](https://www.agilelab.it/witboost) or [contact us!](https://www.agilelab.it/contacts)
 
-## Repository structure
+This repository is part of our [Starter Kit](https://github.com/agile-lab-dev/witboost-starter-kit) meant to showcase Witboost's integration capabilities and provide a "batteries-included" product.
+
+# Hasura Authentication Webhook and Role Mapper
+
+- [Overview](#overview)
+- [Building](#building)
+- [Running](#running)
+- [Configuring](#configuring)
+- [Deploying](#deploying)
+- [HLD](#hld)
+- [API specification](hasura-authenticationwebhook-rolemapping-service/openapi-specification.yml)
+
+## Overview
+
+This Python microservice implements an Authentication Webhook and Role Mapping service for GraphQL Output Ports based on Hasura. It is used by the corresponding [Hasura Specific Provisioner](https://github.com/agile-lab-dev/witboost-hasura-specific-provisioner).
+
+### Hasura
+
+[Hasura](https://hasura.io/) is an open-source, real-time GraphQL engine that simplifies and accelerates API development for web and mobile applications. It connects to your data sources like databases or REST services and automatically generates a GraphQL API, making it easier to query and manipulate data. Hasura's real-time capabilities enable instant updates to clients when data changes, enhancing the responsiveness of applications. It's a popular tool for developers looking to streamline the process of building dynamic and interactive applications by providing a unified and efficient way to access, manage, and synchronize data.
+
+### Software stack
+
+This microservice is written in Python 3.11, using FastAPI for the HTTP layer. Project is built with Poetry and supports packaging as Wheel and Docker image, ideal for Kubernetes deployments (which is the preferred option).
+
+### Repository structure
 
 The Python project for the microservice is in the `hasura-authenticationwebhook-rolemapping-service` subdirectory; this is probably what you're interested in. It contains the code, the tests, the docs, etc.
 
 The rest of the contents of the root of the repository are mostly support scripts and configuration files for the GitLab CI, gitignore, etc.
 
-## Developing
+## Building
+
+**Requirements:**
+
+- Python 3.11
+- Poetry
 
 ### Setup the Python environment
 
@@ -65,7 +100,89 @@ The recommended IDE is PyCharm, though other ones should work just fine.
 
 In order to import the project, use the standard "Open..." dialog and point PyCharm to the `hasura-authenticationwebhook-rolemapping-service` subdirectory, *not the repository root*. This ensures that PyCharm correctly identifies this as a Poetry project and prompts you to set it up as such.
 
-## Additional references
+### Docker build
 
-- To configure the `OpenTelemetry framework` refer to the [OpenTelemetry Setup](hasura-authenticationwebhook-rolemapping-service/docs/opentelemetry.md).
-- To build an `image` and run the `docker container` refer to [Docker Setup](hasura-authenticationwebhook-rolemapping-service/docs/docker.md).
+The Docker image can be built with:
+
+```
+docker build .
+```
+
+More details can be found [here](hasura-authenticationwebhook-rolemapping-service/docs/docker.md).
+
+### Additional notes
+
+**Application version:** the version for the project is automatically computed using information gathered from Git, using branch name and tags. Unless you are on a release branch `1.2.x` or a tag `v1.2.3` it will end up being `0.0.0`. You can follow this branch/tag convention or update the version computation to match your preferred strategy.
+
+**CI/CD:** the pipeline is based on GitLab CI as that's what we use internally. It's configured by the `.gitlab-ci.yaml` file in the root of the repository. You can use that as a starting point for your customizations.
+
+## Running
+
+To run the server locally, use:
+
+```bash
+cd hasura-authenticationwebhook-rolemapping-service
+source $(poetry env info --path)/bin/activate # only needed if venv is not already enabled
+uvicorn src.main:app --host 127.0.0.1 --port 8092
+```
+
+By default, the server binds to port 8092 on localhost. After it's up and running you can make provisioning requests to this address. You can also check the API documentation served [here](http://127.0.0.1:8092/docs).
+
+## Configuring
+
+Application configurations are handled with environment variables:
+
+| Environment Variable             | Description                                                                        |
+|----------------------------------|------------------------------------------------------------------------------------|
+| GRAPHQL_URL                      | URL of the Hasura instance                                                         |
+ | GRAPHQL_ROLE                     | Role to use when performing actions on Hasura                                      |
+| GRAPHQL_ADMIN_SECRET             | Admin secret for the Hasura instance                                               |          
+| JWKS_URL                         | JWKS URL, eg "https://login.microsoftonline.com/common/discovery/v2.0/keys"        |
+ | JWT_AUDIENCE                     | JWT audience, eg "https://management.core.windows.net/"                            |
+ | JWT_ALGORITHMS                   | JWT algorithms, eg `[\"RS256\", \"RS512\"]                                         |
+ | JWT_OPTIONS                      | JWT options, eg `"{\"verify_exp\": true,\"require\": [\"exp\", \"iat\"]}"`         |
+ | AZURE_SCOPES                     | For Azure AD JWTs; the JWT scopes, eg `[\"https://graph.microsoft.com/.default\"]` |
+| AZURE_TENANT_ID                  | For Azure AD JWTs; the tenant id                                                   |                
+| AZURE_CLIENT_ID                  | For Azure AD JWTs; the client id                                                   |              
+| AZURE_CLIENT_SECRET              | For Azure AD JWTs; the client secret                                               |
+ | AUTHORIZATION_HEADER_FIELD_NAMES | List of headers fields to use, eg: `"[\"authorization\", \"Authorization\"]"`      |
+ | ROLEMAPPING_TABLE_SCHEMA         | Schema for the role mapping table on the database, eg "rolemapping"                |
+
+Those environment variables are already templated in the Helm chart (see below). Customize them according to your needs.
+
+Logging is handled with the native Python logging module. The Helm chart provides a default [logging.yaml](helm/files/logging.yaml) that you can override. Check out the [Helm docs](helm/README.md) for details.
+
+To configure the `OpenTelemetry framework` refer to the [OpenTelemetry Setup](hasura-authenticationwebhook-rolemapping-service/docs/opentelemetry.md).
+
+## Deploying
+
+This microservice is meant to be deployed to a Kubernetes cluster with the included Helm chart and the scripts that can be found in the `helm` subdirectory. You can find more details [here](helm/README.md).
+
+## HLD
+
+Refer to the HLD for the corresponding Specific Provisioner [here](https://github.com/agile-lab-dev/witboost-hasura-specific-provisioner/docs/HLD.md).
+
+## License
+
+This project is available under the [Apache License, Version 2.0](https://opensource.org/licenses/Apache-2.0); see [LICENSE](LICENSE) for full details.
+
+## About us
+
+<br/>
+<p align="center">
+    <a href="https://www.agilelab.it">
+        <img src="docs/img/agilelab_logo.svg" alt="Agile Lab" width=600>
+    </a>
+</p>
+<br/>
+
+Agile Lab creates value for its Clients in data-intensive environments through customizable solutions to establish performance driven processes, sustainable architectures, and automated platforms driven by data governance best practices.
+
+Since 2014 we have implemented 100+ successful Elite Data Engineering initiatives and used that experience to create Witboost: a technology-agnostic, modular platform, that empowers modern enterprises to discover, elevate and productize their data both in traditional environments and on fully compliant Data mesh architectures.
+
+[Contact us](https://www.agilelab.it/contacts) or follow us on:
+- [LinkedIn](https://www.linkedin.com/company/agile-lab/)
+- [Instagram](https://www.instagram.com/agilelab_official/)
+- [YouTube](https://www.youtube.com/channel/UCTWdhr7_4JmZIpZFhMdLzAA)
+- [Twitter](https://twitter.com/agile__lab)
+
